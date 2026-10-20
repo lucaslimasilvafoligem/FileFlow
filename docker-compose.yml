@@ -1,0 +1,69 @@
+name: fileflow
+
+services:
+  minio:
+    image: ${MINIO_IMAGE}
+    command: server /data --console-address ":${MINIO_CONSOLE_INTERNAL_PORT}"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:?defina STORAGE_ACCESS_KEY no .env}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:?defina STORAGE_SECRET_KEY no .env}
+    ports:
+      - "127.0.0.1:${MINIO_API_PORT}:${MINIO_API_INTERNAL_PORT}"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_INTERNAL_PORT}"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: ${MINIO_HEALTH_INTERVAL}
+      timeout: ${MINIO_HEALTH_TIMEOUT}
+      retries: ${MINIO_HEALTH_RETRIES}
+      start_period: ${MINIO_HEALTH_START_PERIOD}
+    restart: ${RESTART_POLICY}
+    networks: [fileflow]
+
+  postgres:
+    image: ${POSTGRES_IMAGE}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:${POSTGRES_INTERNAL_PORT}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: ${POSTGRES_HEALTH_INTERVAL}
+      timeout: ${POSTGRES_HEALTH_TIMEOUT}
+      retries: ${POSTGRES_HEALTH_RETRIES}
+      start_period: ${POSTGRES_HEALTH_START_PERIOD}
+    restart: ${RESTART_POLICY}
+    networks: [fileflow]
+
+  rabbitmq:
+    image: ${RABBITMQ_IMAGE}
+    environment:
+      RABBITMQ_DEFAULT_USER: ${QUEUE_USER:?defina QUEUE_USER no .env}
+      RABBITMQ_DEFAULT_PASS: ${QUEUE_PASSWORD:?defina QUEUE_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:${QUEUE_PORT}:${QUEUE_INTERNAL_PORT}"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_INTERNAL_PORT}"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: ${QUEUE_HEALTH_INTERVAL}
+      timeout: ${QUEUE_HEALTH_TIMEOUT}
+      retries: ${QUEUE_HEALTH_RETRIES}
+      start_period: ${QUEUE_HEALTH_START_PERIOD}
+    restart: ${RESTART_POLICY}
+    networks: [fileflow]
+
+volumes:
+  minio-data:
+  postgres-data:
+  rabbitmq-data:
+
+networks:
+  fileflow:
+    driver: bridge

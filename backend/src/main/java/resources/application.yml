@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: fileflow
+  profiles:
+    default: local
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:500MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:500MB}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fileflow}
+    username: ${POSTGRES_USER:fileflow}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  rabbitmq:
+    host: ${QUEUE_HOST:localhost}
+    port: ${QUEUE_PORT:5672}
+    username: ${QUEUE_USER:fileflow}
+    password: ${QUEUE_PASSWORD}
+    connection-timeout: 5s
+    publisher-confirm-type: simple
+  task:
+    scheduling:
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+files:
+  upload:
+    max-size: ${UPLOAD_MAX_FILE_SIZE:500MB}
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+storage:
+  endpoint: ${STORAGE_ENDPOINT:}
+  public-endpoint: ${STORAGE_PUBLIC_ENDPOINT:}
+  region: ${STORAGE_REGION:us-east-1}
+  access-key: ${STORAGE_ACCESS_KEY:}
+  secret-key: ${STORAGE_SECRET_KEY:}
+  bucket: ${STORAGE_BUCKET:fileflow}
+  force-path-style: ${STORAGE_FORCE_PATH_STYLE:true}
+  presigned-url-expiration: 15m
+  connect-timeout: 5s
+  read-timeout: 30s
+  api-call-timeout: 60s
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        live:
+          include: livenessState
+        ready:
+          include: readinessState,db,rabbit
+
+processing:
+  enabled-job-types: FILE_METADATA
+
+messaging:
+  retry:
+    delays: 5s,30s,2m
+  outbox:
+    batch-size: 100

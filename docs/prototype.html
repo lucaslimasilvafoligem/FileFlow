@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FileFlow — Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F5F3; --panel:#FFFFFF; --border:#DADDD9; --text:#14181A; --muted:#5D6663;
+  --accent:#2A6F63; --accent-soft:#E3EEEB; --warn:#B8722A; --warn-soft:#F5E9DA;
+  --danger:#B3452E; --danger-soft:#F6E4DE; --nav-bg:#14181A; --nav-text:#C9CDCA; --nav-active:#FFFFFF;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181A; --panel:#1B2023; --border:#2B3235; --text:#E7E9E7; --muted:#93A0A0;
+    --accent:#5FB3A3; --accent-soft:#1E2E2A; --warn:#E0A659; --warn-soft:#332A1B;
+    --danger:#E08268; --danger-soft:#332018; --nav-bg:#0E1112; --nav-text:#8E9795; --nav-active:#FFFFFF;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181A; --panel:#1B2023; --border:#2B3235; --text:#E7E9E7; --muted:#93A0A0;
+  --accent:#5FB3A3; --accent-soft:#1E2E2A; --warn:#E0A659; --warn-soft:#332A1B;
+  --danger:#E08268; --danger-soft:#332018; --nav-bg:#0E1112; --nav-text:#8E9795; --nav-active:#FFFFFF;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.shell{display:flex;min-height:100vh}
+.nav{width:200px;flex:0 0 200px;background:var(--nav-bg);color:var(--nav-text);padding:20px 14px;padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:2px}
+.nav-brand{color:var(--nav-active);font-weight:700;font-size:15px;letter-spacing:-0.01em;margin-bottom:18px;padding:0 8px}
+.nav-brand span{color:var(--accent)}
+.nav-item{padding:9px 10px;border-radius:5px;cursor:pointer;font-size:13.5px;border-left:2px solid transparent}
+.nav-item:hover{color:var(--nav-active)}
+.nav-item.active{background:rgba(255,255,255,.06);color:var(--nav-active);border-left:2px solid var(--accent)}
+.main{flex:1;padding:26px 32px;padding-top:calc(26px + env(safe-area-inset-top,0px));max-width:1100px;overflow-x:auto}
+.screen{display:none}
+.screen.active{display:block}
+h1{font-size:19px;margin:0 0 4px}
+h2{font-size:14px;margin:0 0 12px;color:var(--muted);font-weight:600}
+.subtitle{color:var(--muted);font-size:13px;margin:0 0 24px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px}
+@media (max-width:720px){.grid4{grid-template-columns:repeat(2,1fr)}.shell{flex-direction:column}.nav{width:100%;flex-direction:row;overflow-x:auto}}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
+.stat .label{color:var(--muted);font-size:12px;margin-bottom:6px}
+.stat .value{font-size:22px;font-weight:600}
+.stat .delta{font-size:12px;color:var(--accent);margin-top:4px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:18px;margin-bottom:18px}
+.bar-track{height:8px;background:var(--accent-soft);border-radius:4px;overflow:hidden;margin-top:8px}
+.bar-fill{height:100%;background:var(--accent);border-radius:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:500}
+.badge.completed{background:var(--accent-soft);color:var(--accent)}
+.badge.processing{background:var(--warn-soft);color:var(--warn)}
+.badge.failed{background:var(--danger-soft);color:var(--danger)}
+.toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+input[type=text],select{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit}
+input[type=text]{flex:1;min-width:160px}
+.dropzone{border:1.5px dashed var(--border);border-radius:8px;padding:38px 20px;text-align:center;color:var(--muted);margin-bottom:18px}
+.dropzone strong{color:var(--text);display:block;margin-bottom:4px;font-size:14px}
+.upload-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.upload-row:last-child{border-bottom:none}
+.upload-row .name{flex:0 0 160px;font-size:13px}
+.upload-row .track{flex:1}
+.upload-row .pct{width:38px;text-align:right;font-size:12px;color:var(--muted)}
+.details-layout{display:grid;grid-template-columns:1fr 1.3fr;gap:18px}
+@media (max-width:820px){.details-layout{grid-template-columns:1fr}}
+.preview{aspect-ratio:4/3;background:var(--accent-soft);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:12px}
+dl{margin:0}
+dl div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+dl div:last-child{border-bottom:none}
+dt{color:var(--muted)}
+dd{margin:0;text-align:right}
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:10px;padding:8px 0}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
+.tl-item.pending .tl-dot{background:var(--border)}
+.tl-body .title{font-size:13px}
+.tl-body .time{font-size:11.5px;color:var(--muted)}
+.btn{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="nav">
+    <div class="nav-brand">File<span>Flow</span></div>
+    <div class="nav-item active" data-screen="dashboard">Dashboard</div>
+    <div class="nav-item" data-screen="files">Arquivos</div>
+    <div class="nav-item" data-screen="upload">Upload</div>
+    <div class="nav-item" data-screen="details">Detalhes</div>
+  </nav>
+
+  <main class="main">
+
+    <section class="screen active" id="dashboard">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Visão geral do storage e do processamento</p>
+      <div class="grid4">
+        <div class="stat"><div class="label">Arquivos</div><div class="value">1.284</div><div class="delta">+37 hoje</div></div>
+        <div class="stat"><div class="label">Storage usado</div><div class="value">42,6 GB</div><div class="delta">de 100 GB</div></div>
+        <div class="stat"><div class="label">Jobs em processamento</div><div class="value">6</div></div>
+        <div class="stat"><div class="label">Falhas (24h)</div><div class="value" style="color:var(--danger)">2</div></div>
+      </div>
+      <div class="panel">
+        <h2>Storage utilizado</h2>
+        <div class="bar-track"><div class="bar-fill" style="width:43%"></div></div>
+      </div>
+      <div class="panel">
+        <h2>Uploads recentes</h2>
+        <table>
+          <tr><th>Arquivo</th><th>Tipo</th><th>Status</th><th>Enviado</th></tr>
+          <tr><td class="mono">aula-modulo-3.mp3</td><td>Áudio</td><td><span class="badge processing">Transcrevendo</span></td><td>há 4 min</td></tr>
+          <tr><td class="mono">relatorio-final.pdf</td><td>Documento</td><td><span class="badge completed">Concluído</span></td><td>há 22 min</td></tr>
+          <tr><td class="mono">banner-evento.jpg</td><td>Imagem</td><td><span class="badge completed">Concluído</span></td><td>há 1h</td></tr>
+          <tr><td class="mono">entrevista-02.mp4</td><td>Vídeo</td><td><span class="badge failed">Falhou</span></td><td>há 3h</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="screen" id="files">
+      <h1>Arquivos</h1>
+      <p class="subtitle">Todos os arquivos enviados</p>
+      <div class="toolbar">
+        <input type="text" placeholder="Buscar por nome...">
+        <select><option>Todos os tipos</option><option>Imagem</option><option>Áudio</option><option>Vídeo</option><option>Documento</option></select>
+        <select><option>Todos os status</option><option>Concluído</option><option>Processando</option><option>Falhou</option></select>
+      </div>
+      <div class="panel" style="padding:0">
+        <table>
+          <tr><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Status</th><th>Criado em</th></tr>
+          <tr><td class="mono">aula-modulo-3.mp3</td><td>Áudio</td><td>18,2 MB</td><td><span class="badge processing">Processando</span></td><td>23/09 14:02</td></tr>
+          <tr><td class="mono">relatorio-final.pdf</td><td>Documento</td><td>2,4 MB</td><td><span class="badge completed">Concluído</span></td><td>23/09 13:40</td></tr>
+          <tr><td class="mono">banner-evento.jpg</td><td>Imagem</td><td>1,1 MB</td><td><span class="badge completed">Concluído</span></td><td>23/09 12:55</td></tr>
+          <tr><td class="mono">entrevista-02.mp4</td><td>Vídeo</td><td>340 MB</td><td><span class="badge failed">Falhou</span></td><td>23/09 11:10</td></tr>
+          <tr><td class="mono">contrato-assinado.pdf</td><td>Documento</td><td>860 KB</td><td><span class="badge completed">Concluído</span></td><td>22/09 17:30</td></tr>
+          <tr><td class="mono">foto-perfil.png</td><td>Imagem</td><td>420 KB</td><td><span class="badge completed">Concluído</span></td><td>22/09 09:12</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="screen" id="upload">
+      <h1>Upload</h1>
+      <p class="subtitle">Envie arquivos para processamento</p>
+      <div class="dropzone">
+        <strong>Arraste arquivos aqui</strong>
+        ou clique para selecionar — máx. 500 MB por arquivo
+      </div>
+      <div class="panel">
+        <h2>Em andamento</h2>
+        <div class="upload-row">
+          <div class="name mono">aula-modulo-3.mp3</div>
+          <div class="track"><div class="bar-track"><div class="bar-fill" id="p1" style="width:65%"></div></div></div>
+          <div class="pct">65%</div>
+        </div>
+        <div class="upload-row">
+          <div class="name mono">slides-aula.pdf</div>
+          <div class="track"><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div>
+          <div class="pct">100%</div>
+        </div>
+        <div class="upload-row">
+          <div class="name mono">video-intro.mp4</div>
+          <div class="track"><div class="bar-track"><div class="bar-fill" id="p2" style="width:18%"></div></div></div>
+          <div class="pct">18%</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="details">
+      <h1 class="mono">aula-modulo-3.mp3</h1>
+      <p class="subtitle">Detalhes do arquivo e artefatos derivados</p>
+      <div class="details-layout">
+        <div>
+          <div class="panel"><div class="preview">Sem preview visual — áudio</div></div>
+          <div class="panel">
+            <h2>Metadados</h2>
+            <dl>
+              <div><dt>Tamanho</dt><dd>18,2 MB</dd></div>
+              <div><dt>Tipo</dt><dd class="mono">audio/mpeg</dd></div>
+              <div><dt>Duração</dt><dd>42:11</dd></div>
+              <div><dt>Checksum</dt><dd class="mono">a4f1…e02c</dd></div>
+              <div><dt>Enviado em</dt><dd>23/09 14:02</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div>
+          <div class="panel">
+            <h2>Progresso do processamento</h2>
+            <div class="timeline">
+              <div class="tl-item"><div class="tl-dot"></div><div class="tl-body"><div class="title">Upload concluído</div><div class="time">14:02:03</div></div></div>
+              <div class="tl-item"><div class="tl-dot"></div><div class="tl-body"><div class="title">Job AUDIO_TRANSCRIPTION iniciado</div><div class="time">14:02:05</div></div></div>
+              <div class="tl-item pending"><div class="tl-dot"></div><div class="tl-body"><div class="title">Transcrevendo áudio…</div><div class="time">em andamento</div></div></div>
+              <div class="tl-item pending"><div class="tl-dot"></div><div class="tl-body"><div class="title">Notificação por e-mail</div><div class="time">pendente</div></div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>Artefatos derivados</h2>
+            <table>
+              <tr><th>Artefato</th><th>Tipo</th><th>Status</th></tr>
+              <tr><td class="mono">metadata.json</td><td>Metadados</td><td><span class="badge completed">Pronto</span></td></tr>
+              <tr><td class="mono">transcription.txt</td><td>Transcrição</td><td><span class="badge processing">Gerando</span></td></tr>
+            </table>
+          </div>
+          <button class="btn">Baixar original</button>
+          <button class="btn secondary" style="margin-left:8px">Excluir arquivo</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+document.querySelectorAll('.nav-item').forEach(function(item){
+  item.addEventListener('click', function(){
+    document.querySelectorAll('.nav-item').forEach(function(i){i.classList.remove('active')});
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+    item.classList.add('active');
+    document.getElementById(item.dataset.screen).classList.add('active');
+  });
+});
+// leve animação de progresso ilustrativa, sem persistência
+(function(){
+  var a=document.getElementById('p1'), b=document.getElementById('p2');
+  var va=65, vb=18;
+  setInterval(function(){
+    va=Math.min(va+1,100); vb=Math.min(vb+1,100);
+    if(a) a.style.width=va+'%';
+    if(b) b.style.width=vb+'%';
+  },1200);
+})();
+</script>
+</body>
+</html>

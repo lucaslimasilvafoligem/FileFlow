@@ -1,0 +1,25 @@
+# Segredos
+.env
+*.pem
+*.key
+
+# Backend (Maven/Java)
+backend/target/
+*.class
+*.jar
+!**/.mvn/wrapper/*.jar
+
+# Frontend (Angular/Node)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# IDEs e SO
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs e temporários
+*.log
+tmp/

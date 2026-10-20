@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: fileflow
+  profiles:
+    default: local
+  servlet:
+    multipart:
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:500MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:500MB}
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+storage:
+  endpoint: ${STORAGE_ENDPOINT:}
+  public-endpoint: ${STORAGE_PUBLIC_ENDPOINT:}
+  region: ${STORAGE_REGION:us-east-1}
+  access-key: ${STORAGE_ACCESS_KEY:}
+  secret-key: ${STORAGE_SECRET_KEY:}
+  bucket: ${STORAGE_BUCKET:fileflow}
+  force-path-style: ${STORAGE_FORCE_PATH_STYLE:false}
+  presigned-url-expiration: 15m
+  connect-timeout: 5s
+  read-timeout: 30s
+  api-call-timeout: 60s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
